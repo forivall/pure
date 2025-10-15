@@ -4,50 +4,6 @@
 
 <img src="screenshot.png" width="864">
 
-<br>
-
----
-
-<div align="center">
-	<p>
-		<p>
-			<sup>
-				<a href="https://github.com/sponsors/sindresorhus">Sindre Sorhus' open source work is supported by the community</a>
-			</sup>
-		</p>
-		<sup>Special thanks to:</sup>
-		<br>
-		<br>
-		<br>
-		<a href="https://standardresume.co/tech">
-			<img src="https://sindresorhus.com/assets/thanks/standard-resume-logo.svg" width="200"/>
-		</a>
-		<br>
-		<br>
-		<br>
-		<a href="https://www.gitpod.io/?utm_campaign=sindresorhus&utm_medium=referral&utm_content=awesome&utm_source=github">
-			<div>
-				<img src="https://sindresorhus.com/assets/thanks/gitpod-logo-white-bg.svg" width="240" alt="Gitpod">
-			</div>
-			<b>Dev environments built for the cloud</b>
-			<div>
-				<sub>
-				Natively integrated with GitLab, GitHub, and Bitbucket, Gitpod automatically and continuously prebuilds dev
-				<br>
-				environments for all your branches. As a result team members can instantly start coding with fresh dev environments
-				<br>
-				for each new task - no matter if you are building a new feature, want to fix a bug, or work on a code review.
-				</sub>
-			</div>
-		</a>
-		<br>
-	</p>
-</div>
-
----
-
-<br>
-
 ## Overview
 
 Most prompts are cluttered, ugly and slow. We wanted something visually pleasing that stayed out of our way.
@@ -155,7 +111,7 @@ Colors can be changed by using [`zstyle`](http://zsh.sourceforge.net/Doc/Release
 - `git:stash` (cyan) - For `PURE_GIT_STASH_SYMBOL`.
 - `git:branch` (242) - The name of the current branch when in a Git repository.
 - `git:branch:cached` (red) - The name of the current branch when the data isn't fresh.
-- `git:action` (242) - The current action in progress (cherry-pick, rebase, etc.) when in a Git repository.
+- `git:action` (yellow) - The current action in progress (cherry-pick, rebase, etc.) when in a Git repository.
 - `git:dirty` (218) - The asterisk showing the branch is dirty.
 - `host` (242) - The hostname when on a remote machine.
 - `path` (blue) - The current path, for example, `PWD`.
@@ -259,7 +215,7 @@ zplug mafredri/zsh-async, from:github
 zplug sindresorhus/pure, use:pure.zsh, from:github, as:theme
 ```
 
-### [zinit](https://github.com/zdharma/zinit)
+### [zinit](https://github.com/zdharma-continuum/zinit)
 
 Update your `.zshrc` file with the following two lines (order matters):
 
