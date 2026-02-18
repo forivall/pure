@@ -118,25 +118,6 @@ prompt_pure_set_colors() {
 	done
 }
 
-prompt_pure_print_path() {
-	local upath='%~'
-
-	if [[ -n $prompt_pure_vcs_info[branch] ]]; then
-		# expand %~
-		upath=${(%)upath}
-		# remove git subdirectory from path to get "pretty" repo path
-		local repo=${upath%'/'$prompt_pure_vcs_info[relative_path]}
-		if [[ $repo != $upath || $prompt_pure_vcs_info[relative_path] == '.' ]]; then
-			local parent="${repo:h}/"
-			# if parent is ./ we can safely remove it
-			local _repo="${parent#./}%B${repo:t}%b%F{blue}"
-			upath=${upath/$repo/$_repo}
-		fi
-	fi
-
-	print $upath
-}
-
 prompt_pure_preprompt_render() {
 	setopt localoptions noshwordsplit
 
@@ -155,8 +136,27 @@ prompt_pure_preprompt_render() {
 
 	# psvar[13]: Username flag (set once in prompt_pure_state_setup).
 
-	# psvar[26]: Customized version of `%~`
-	psvar[26]=$(prompt_pure_print_path)
+	# psvar[26]: `%~` path to parent dir of repo
+	# psvar[27]: `%~` repo name. implies 26 & 28 are set
+	# psvar[28]: `%~` relative path
+	psvar[26]=
+	psvar[27]=
+	psvar[28]=
+
+	if [[ -n $prompt_pure_vcs_info[branch] ]]; then
+		local psdir_temp='%~'
+		psdir_temp=${(%)psdir_temp}
+		# remove git subdirectory from path to get "pretty" repo path
+		local repo=${psdir_temp%'/'$prompt_pure_vcs_info[relative_path]}
+		if [[ $repo != $psdir_temp ]]; then
+			psvar[26]="${${repo:h}#./}/"
+			psvar[27]="${repo:t}"
+			psvar[28]="/${prompt_pure_vcs_info[relative_path]}"
+		elif [[ $prompt_pure_vcs_info[relative_path] == '.' ]]; then
+			psvar[26]="${${repo:h}#./}/"
+			psvar[27]="${repo:t}"
+		fi
+	fi
 
 	# psvar[14]: Git branch name.
 	psvar[14]=${prompt_pure_vcs_info[branch]}
@@ -252,7 +252,7 @@ prompt_pure_async_git_aliases() {
 	local -a gitalias pullalias
 
 	# List all aliases and split on newline.
-	gitalias=(${(@f)"$(command git config --get-regexp "^alias\.")"})
+	gitalias=(${(@f)"$(command git config --get-regexp "^alias\.")"}) # "
 	for line in $gitalias; do
 		parts=(${(@)=line})           # Split line on spaces.
 		aliasname=${parts[1]#alias.}  # Grab the name (alias.[name]).
@@ -891,7 +891,9 @@ prompt_pure_setup() {
 	#   psvar[19] = exec time (e.g. 1d 3h 2m 5s)
 	#   psvar[20] = virtualenv/conda/nix-shell name
 	#
-	#   psvar[26] = customized version of `%~`
+	#   psvar[26] = `%~` path to parent dir of repo
+	#   psvar[27] = `%~` repo name. implies 26 & 28 are set
+	#   psvar[28] = `%~` relative path
 	#
 	# Example output:
 	#   ✦ user@host ~/Code/pure main* rebase ⇣⇡ ≡ 3s
@@ -900,7 +902,7 @@ prompt_pure_setup() {
 	# Preprompt line: each %(NV..) section only renders when its psvar is non-empty.
 	PROMPT='%(12V.%F{$prompt_pure_colors[suspended_jobs]}%12v%f .)'
 	PROMPT+='%(13V.%F{$prompt_pure_colors['"${prompt_pure_state[user_color]:-user}"']}%n%f%F{$prompt_pure_colors[host]}@%m%f .)'
-	PROMPT+='%F{${prompt_pure_colors[path]}}%26v%f'
+	PROMPT+='%F{${prompt_pure_colors[path]}}%(27V.%26v%B%27v%b%28v.%~)%f'
 	PROMPT+='%(14V. %F{${prompt_pure_git_branch_color}}%14v%(15V.%F{$prompt_pure_colors[git:dirty]}%15v.)%f.)'
 	PROMPT+='%(16V. %F{$prompt_pure_colors[git:action]}%16v%f.)'
 	PROMPT+='%(17V. %F{$prompt_pure_colors[git:arrow]}%17v%f.)'
