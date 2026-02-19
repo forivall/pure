@@ -149,12 +149,15 @@ prompt_pure_preprompt_render() {
 		# remove git subdirectory from path to get "pretty" repo path
 		local repo=${psdir_temp%'/'$prompt_pure_vcs_info[relative_path]}
 		if [[ $repo != $psdir_temp ]]; then
-			psvar[26]="${${repo:h}#./}/"
+			psvar[26]="${repo:h}/"
 			psvar[27]="${repo:t}"
 			psvar[28]="/${prompt_pure_vcs_info[relative_path]}"
 		elif [[ $prompt_pure_vcs_info[relative_path] == '.' ]]; then
-			psvar[26]="${${repo:h}#./}/"
+			psvar[26]="${repo:h}/"
 			psvar[27]="${repo:t}"
+		fi
+	  if [[ ${psvar[26]} == "./" ]]; then
+			psvar[26]=
 		fi
 	fi
 
