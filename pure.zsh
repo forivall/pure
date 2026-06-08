@@ -174,7 +174,7 @@ prompt_pure_preprompt_render() {
 	psvar[17]=${prompt_pure_git_arrows}
 
 	# psvar[30]: GitHub pull request.
-	psvar[30]=${prompt_pure_github_pr}
+	psvar[30]=$(prompt_pure_github_pr)
 
 	# psvar[18]: Git stash flag.
 	psvar[18]=
@@ -411,18 +411,39 @@ prompt_pure_async_github_pr() {
 	GH_PROMPT_DISABLED=1 GIT_TERMINAL_PROMPT=0 command \
  gh pr view --json number,state,isDraft,statusCheckRollup --jq '
 		def pr_status:
-			if .isDraft then "draft"
-			elif .state == "CLOSED" then "☒"
-			elif .state == "MERGED" then "☑︎"
-			elif (.statusCheckRollup | length) == 0 then "☐"
-			elif any(.statusCheckRollup[]; (.conclusion // "") | IN("FAILURE", "TIMED_OUT", "ACTION_REQUIRED", "CANCELLED")) then "✗"
-			elif any(.statusCheckRollup[]; (.conclusion // "") == "ACTION_REQUIRED") then "‽"
-			elif any(.statusCheckRollup[]; (.status // "") != "COMPLETED") then "↺"
-			elif all(.statusCheckRollup[]; (.conclusion // "") | IN("SUCCESS", "SKIPPED", "NEUTRAL")) then "✓"
-			else "checks"
+			if .isDraft then "DRAFT"
+			elif .state != "OPEN" then .state
+			elif (.statusCheckRollup | length) == 0 then "OPEN"
+			elif any(.statusCheckRollup[]; (.conclusion // "") | IN("FAILURE", "TIMED_OUT", "CANCELLED")) then "OPEN_FAILURE"
+			elif any(.statusCheckRollup[]; (.conclusion // "") == "ACTION_REQUIRED") then "OPEN_ACTION"
+			elif any(.statusCheckRollup[]; (.status // "") != "COMPLETED") then "OPEN_PENDING"
+			elif all(.statusCheckRollup[]; (.conclusion // "") | IN("SUCCESS", "SKIPPED", "NEUTRAL")) then "OPEN_SUCCESS"
+			else "OPEN"
 			end;
-		"#\(.number) \(pr_status)"
+		"\(.number) \(pr_status)"
 	' 2>/dev/null
+}
+
+prompt_pure_github_pr() {
+	if [[ -z $prompt_pure_github_pr ]]; then
+		return
+	fi
+	typeset -A prompt_pure_github_pr_symbols_default=(
+		DRAFT "¶"
+		CLOSED "☒"
+		MERGED "☑︎"
+		OPEN "☐"
+		OPEN_FAILURE "✗"
+		OPEN_ACTION "‽"
+		OPEN_PENDING "↺"
+		OPEN_SUCCESS "✓"
+	)
+	local github_pr_values=("${(z)prompt_pure_github_pr}")
+	local github_pr_number=${github_pr_values[1]}
+	local github_pr_status=${github_pr_values[2]}
+	local github_pr_symbol_var="PURE_GITHUB_${github_pr_status}_SYMBOL"
+	printf "#%s %s" $github_pr_number \
+	  ${(P)github_pr_symbol_var:-${prompt_pure_github_pr_symbols_default[$github_pr_status]}}
 }
 
 # Try to lower the priority of the worker so that disk heavy operations
