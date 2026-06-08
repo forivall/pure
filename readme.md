@@ -99,6 +99,10 @@ You can set Pure to only `git fetch` the upstream branch of the current local br
 
 `zstyle :prompt:pure:environment:nix-shell show no`
 
+GitHub pull request status is shown on the prompt line when the current GitHub branch has an associated pull request and the [GitHub CLI](https://cli.github.com/) is installed and authenticated. It is enabled by default, you can disable it with:
+
+`zstyle :prompt:pure:github:pr show no`
+
 ## Colors
 
 As explained in ZSH's [manual](http://zsh.sourceforge.net/Doc/Release/Zsh-Line-Editor.html#Character-Highlighting), color values can be:
@@ -114,6 +118,7 @@ Colors can be changed by using [`zstyle`](http://zsh.sourceforge.net/Doc/Release
 - `git:branch:cached` (red) - The name of the current branch when the data isn't fresh.
 - `git:action` (yellow) - The current action in progress (cherry-pick, rebase, etc.) when in a Git repository.
 - `git:dirty` (218) - The asterisk showing the branch is dirty.
+- `github:pr` (242) - The GitHub pull request number and status.
 - `host` (242) - The hostname when on a remote machine.
 - `path` (blue) - The current path, for example, `PWD`.
 - `prompt:error` (red) - The `PURE_PROMPT_SYMBOL` when the previous command has *failed*.
@@ -127,17 +132,18 @@ Colors can be changed by using [`zstyle`](http://zsh.sourceforge.net/Doc/Release
 The following diagram shows where each color is applied on the prompt:
 
 ```
-┌────────────────────────────────────────────────────── user
-│      ┌─────────────────────────────────────────────── host
-│      │           ┌─────────────────────────────────── path
-│      │           │          ┌──────────────────────── git:branch
-│      │           │          │     ┌────────────────── git:dirty
-│      │           │          │     │ ┌──────────────── git:action
-│      │           │          │     │ │        ┌─────── git:arrow
-│      │           │          │     │ │        │ ┌───── git:stash
-│      │           │          │     │ │        │ │ ┌─── execution_time
-│      │           │          │     │ │        │ │ │
-zaphod@heartofgold ~/dev/pure master* rebase-i ⇡ ≡ 42s
+┌───────────────────────────────────────────────────────────── user
+│      ┌────────────────────────────────────────────────────── host
+│      │           ┌────────────────────────────────────────── path
+│      │           │          ┌─────────────────────────────── git:branch
+│      │           │          │     ┌───────────────────────── git:dirty
+│      │           │          │     │ ┌─────────────────────── git:action
+│      │           │          │     │ │        ┌────────────── github:pr
+│      │           │          │     │ │        │      ┌─────── git:arrow
+│      │           │          │     │ │        │      │ ┌───── git:stash
+│      │           │          │     │ │        │      │ │ ┌─── execution_time
+│      │           │          │     │ │        │      │ │ │
+zaphod@heartofgold ~/dev/pure master* rebase-i #123 ✓ ⇡ ≡ 42s
 venv ❯
 │    │
 │    └───────────────────────────────────────────────── prompt

@@ -173,6 +173,9 @@ prompt_pure_preprompt_render() {
 	# psvar[17]: Git arrows (push/pull).
 	psvar[17]=${prompt_pure_git_arrows}
 
+	# psvar[30]: GitHub pull request.
+	psvar[30]=${prompt_pure_github_pr}
+
 	# psvar[18]: Git stash flag.
 	psvar[18]=
 	[[ -n $prompt_pure_git_stash ]] && psvar[18]=1
@@ -396,6 +399,32 @@ prompt_pure_async_git_stash() {
 	git rev-list --walk-reflogs --count refs/stash
 }
 
+prompt_pure_async_github_pr() {
+	setopt localoptions noshwordsplit
+
+	(( $+commands[gh] )) || return 97
+
+	local git_remotes
+	git_remotes=$(command git remote -v 2>/dev/null)
+	[[ $git_remotes == *github.com* ]] || return 97
+
+	GH_PROMPT_DISABLED=1 GIT_TERMINAL_PROMPT=0 command \
+ gh pr view --json number,state,isDraft,statusCheckRollup --jq '
+		def pr_status:
+			if .isDraft then "draft"
+			elif .state == "CLOSED" then "☒"
+			elif .state == "MERGED" then "☑︎"
+			elif (.statusCheckRollup | length) == 0 then "☐"
+			elif any(.statusCheckRollup[]; (.conclusion // "") | IN("FAILURE", "TIMED_OUT", "ACTION_REQUIRED", "CANCELLED")) then "✗"
+			elif any(.statusCheckRollup[]; (.conclusion // "") == "ACTION_REQUIRED") then "‽"
+			elif any(.statusCheckRollup[]; (.status // "") != "COMPLETED") then "↺"
+			elif all(.statusCheckRollup[]; (.conclusion // "") | IN("SUCCESS", "SKIPPED", "NEUTRAL")) then "✓"
+			else "checks"
+			end;
+		"#\(.number) \(pr_status)"
+	' 2>/dev/null
+}
+
 # Try to lower the priority of the worker so that disk heavy operations
 # like `git status` has less impact on the system responsivity.
 prompt_pure_async_renice() {
@@ -443,6 +472,7 @@ prompt_pure_async_tasks() {
 		unset prompt_pure_git_arrows
 		unset prompt_pure_git_stash
 		unset prompt_pure_git_fetch_pattern
+		unset prompt_pure_github_pr
 		prompt_pure_vcs_info[branch]=
 		prompt_pure_vcs_info[top]=
 		prompt_pure_vcs_info[relative_path]=
@@ -490,6 +520,12 @@ prompt_pure_async_refresh() {
 		async_job "prompt_pure" prompt_pure_async_git_stash
 	else
 		unset prompt_pure_git_stash
+	fi
+
+	if zstyle -T ":prompt:pure:github:pr" show; then
+		async_job "prompt_pure" prompt_pure_async_github_pr
+	else
+		unset prompt_pure_github_pr
 	fi
 }
 
@@ -635,6 +671,15 @@ prompt_pure_async_callback() {
 			local prev_stash=$prompt_pure_git_stash
 			typeset -g prompt_pure_git_stash=$output
 			[[ $prev_stash != $prompt_pure_git_stash ]] && do_render=1
+			;;
+		prompt_pure_async_github_pr)
+			local prev_github_pr=$prompt_pure_github_pr
+			if (( code == 0 )); then
+				typeset -g prompt_pure_github_pr=${output//\%/%%}
+			else
+				unset prompt_pure_github_pr
+			fi
+			[[ $prev_github_pr != $prompt_pure_github_pr ]] && do_render=1
 			;;
 	esac
 
@@ -848,6 +893,7 @@ prompt_pure_setup() {
 		git:branch:cached    red
 		git:action           yellow
 		git:dirty            218
+		github:pr            242
 		host                 242
 		path                 blue
 		prompt:error         red
@@ -898,6 +944,8 @@ prompt_pure_setup() {
 	#   psvar[27] = `%~` repo name. implies 26 & 28 are set
 	#   psvar[28] = `%~` relative path
 	#
+	#   psvar[30] = GitHub pull request (e.g. #123 passing)
+	#
 	# Example output:
 	#   ✦ user@host ~/Code/pure main* rebase ⇣⇡ ≡ 3s
 	#   myenv ❯
@@ -909,6 +957,7 @@ prompt_pure_setup() {
 	PROMPT+='%(14V. %F{${prompt_pure_git_branch_color}}%14v%(15V.%F{$prompt_pure_colors[git:dirty]}%15v.)%f.)'
 	PROMPT+='%(16V. %F{$prompt_pure_colors[git:action]}%16v%f.)'
 	PROMPT+='%(17V. %F{$prompt_pure_colors[git:arrow]}%17v%f.)'
+	PROMPT+='%(30V. %F{$prompt_pure_colors[github:pr]}%30v%f.)'
 	PROMPT+='%(18V. %F{$prompt_pure_colors[git:stash]}${PURE_GIT_STASH_SYMBOL:-≡}%f.)'
 	PROMPT+='%(19V. %F{$prompt_pure_colors[execution_time]}%19v%f.)'
 
